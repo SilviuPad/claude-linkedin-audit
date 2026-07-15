@@ -34,15 +34,68 @@ cd ~/.claude/skills/linkedin-audit/scripts && npm install
 
 The capture script prefers your system Chrome/Edge. If neither is installed: `npx playwright install chromium`.
 
-## First run
+## How to use
 
-Ask Claude Code to audit your LinkedIn profile. It will:
+### 1. Start an audit
+
+In any Claude Code session, either invoke the skill directly or just ask in plain language:
+
+```
+/linkedin-audit
+```
+
+```
+audit my LinkedIn profile
+```
+
+On the **first run** it will:
 
 1. Ask for your profile URL and target role (saved to `config.json` so it never asks again).
 2. Open a **visible** browser window — log in to LinkedIn manually, once. The session is stored in `.browser-profile/` inside the skill directory and reused on every later run.
-3. Capture, score, and write the report into `audits/<date>/`.
+3. Capture your profile and all detail pages, score every section, and write the report.
 
-Edits are a separate, explicit step: Claude drafts a change set (`CHANGES.md` + `changes.mjs`), shows it to you, and only runs `edit-profile.mjs` after you approve the exact text.
+Later runs skip straight to capture: no questions, no login.
+
+### 2. Read the report
+
+Everything lands in `audits/<date>/` inside the skill directory:
+
+- `REPORT.md` — the scorecard (12 sections, 0–10 each), the top-5 actions ordered by impact, and for every finding a quote of the current text plus a ready-to-paste rewrite.
+- `screenshots/` — full-page captures of your profile and each detail page (banner and photo are scored from these).
+- `extracted/` + `manifest.json` — the raw text and URLs the scores are based on, if you want to check the receipts.
+
+### 3. Apply fixes (optional, always with approval)
+
+Tell Claude which findings to act on:
+
+```
+apply the top 3 actions from the report
+```
+
+```
+rewrite my headline and About the way the report suggests
+```
+
+Claude drafts a change set (`CHANGES.md` + `changes.mjs`) and shows you the **exact final text** — nothing touches your profile until you approve it. Then `edit-profile.mjs` applies the operations, screenshotting before/after each one and verifying by re-capture.
+
+### 4. Verify
+
+```
+re-run the audit and compare with the last one
+```
+
+A fresh capture confirms the edits stuck (LinkedIn sometimes no-op-saves silently — the verify step exists exactly for that) and shows the score delta.
+
+### Example prompts
+
+| You say | What happens |
+| --- | --- |
+| `audit my LinkedIn profile` | full capture → score → `REPORT.md` |
+| `just re-capture, don't re-score` | refresh the raw capture only |
+| `apply the top 3 actions` | drafts a change set for the highest-impact findings |
+| `add the missing skills and pin the right top 3` | skills add + Top-skills showcase swap |
+| `generate and upload a new banner` | renders a 1584×396 banner deterministically, uploads it |
+| `re-run the audit and compare` | fresh audit + before/after score diff |
 
 ## Privacy & responsible use
 
