@@ -1,0 +1,6 @@
+# Runtime artifacts created inside the skill directory — never commit these.
+node_modules/
+.browser-profile/
+audits/
+skills/linkedin-audit/config.json
+*.log

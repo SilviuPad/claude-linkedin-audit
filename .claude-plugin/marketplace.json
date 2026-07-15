@@ -1,0 +1,35 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "silviupad-claude-linkedin-audit",
+  "owner": {
+    "name": "SilviuPad"
+  },
+  "metadata": {
+    "description": "LinkedIn profile audit and editing plugin for Claude Code. Captures your live profile with Playwright using a locally stored login session, scores it against a 12-section recruiter-focused rubric, writes a prioritized report with concrete rewrites, and can apply approved changes directly to the profile (headline, About, experience, skills, featured, projects, certifications, banner, open-to-work)."
+  },
+  "plugins": [
+    {
+      "name": "linkedin-audit",
+      "source": "./",
+      "description": "Audit your LinkedIn profile against a recruiter-focused rubric and apply approved fixes with Playwright. 12 scored sections (banner, photo, headline, About, Featured, Experience, Education, Projects, Certifications, Skills, Recommendations, Activity), concrete rewrites grounded in your own profile, and 15+ automated edit operations. Login session and audit output never leave your machine.",
+      "author": {
+        "name": "SilviuPad",
+        "email": "sylviu21@gmail.com",
+        "url": "https://github.com/SilviuPad"
+      },
+      "category": "productivity",
+      "keywords": [
+        "linkedin",
+        "profile-audit",
+        "personal-branding",
+        "job-search",
+        "recruiting",
+        "playwright",
+        "browser-automation",
+        "headline-optimization",
+        "resume",
+        "career"
+      ]
+    }
+  ]
+}

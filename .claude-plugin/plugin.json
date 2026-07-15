@@ -1,0 +1,24 @@
+{
+  "name": "linkedin-audit",
+  "version": "1.0.0",
+  "description": "Audit your LinkedIn profile against a recruiter-focused rubric and apply approved fixes with Playwright. Captures the live profile using a locally stored login session, scores 12 sections, writes a prioritized report with concrete rewrites, and supports 15+ automated edit operations (headline, About, experience, skills, featured, projects, certifications, banner, open-to-work). All session data and audit output stay on your machine.",
+  "author": {
+    "name": "SilviuPad",
+    "email": "sylviu21@gmail.com",
+    "url": "https://github.com/SilviuPad"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/SilviuPad/claude-linkedin-audit",
+  "keywords": [
+    "linkedin",
+    "profile-audit",
+    "personal-branding",
+    "job-search",
+    "recruiting",
+    "playwright",
+    "browser-automation",
+    "headline-optimization",
+    "resume",
+    "career"
+  ]
+}

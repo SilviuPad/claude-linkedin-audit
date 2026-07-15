@@ -1,0 +1,142 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1460 440" width="100%"
+     preserveAspectRatio="xMidYMid meet" role="img"
+     aria-label="LinkedIn audit flow: the linkedin-audit skill reads config, captures the live profile with Playwright using a local login session, extracts text and screenshots, fans out into rubric scoring, visual checks, and concrete rewrites, converges into a scored REPORT.md, applies approved edits back to the profile, and verifies by re-capturing.">
+  <title>linkedin-audit architecture</title>
+  <defs>
+    <filter id="glow" x="-70%" y="-70%" width="240%" height="240%"><feGaussianBlur stdDeviation="3.6"/></filter>
+    <filter id="aurora" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="75"/></filter>
+    <radialGradient id="auWarm" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#D97757" stop-opacity="0.40"/><stop offset="100%" stop-color="#D97757" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="auEmber" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#B85C3C" stop-opacity="0.30"/><stop offset="100%" stop-color="#B85C3C" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="auAmber" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#F5B095" stop-opacity="0.22"/><stop offset="100%" stop-color="#F5B095" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1460" height="440" rx="16" fill="#1F1B16"/>
+  <g filter="url(#aurora)" opacity="0.95">
+    <ellipse cx="260" cy="150" rx="420" ry="270" fill="url(#auWarm)">
+      <animateTransform attributeName="transform" type="translate" values="0 0;58 26;0 0" dur="24s" repeatCount="indefinite"/>
+    </ellipse>
+    <ellipse cx="1180" cy="330" rx="440" ry="280" fill="url(#auEmber)">
+      <animateTransform attributeName="transform" type="translate" values="0 0;-48 -20;0 0" dur="30s" repeatCount="indefinite"/>
+    </ellipse>
+    <ellipse cx="720" cy="80" rx="340" ry="200" fill="url(#auAmber)">
+      <animateTransform attributeName="transform" type="translate" values="0 0;30 34;0 0" dur="27s" repeatCount="indefinite"/>
+    </ellipse>
+  </g>
+
+  <text x="40" y="50" font-family="'JetBrains Mono','Cascadia Mono','Menlo',monospace" font-size="13" fill="#7d6857" letter-spacing="1.6">LINKEDIN-AUDIT · CAPTURE → SCORE → APPLY → VERIFY</text>
+
+  <!-- connectors -->
+  <path d="M195,212 L267,212" fill="none" stroke="#4a3a2e" stroke-width="1.4"/>
+  <path d="M425,212 L501,212" fill="none" stroke="#4a3a2e" stroke-width="1.4"/>
+  <path d="M659,212 C706,212 706,104 753,104" fill="none" stroke="#4a3a2e" stroke-width="1.4"/>
+  <path d="M659,212 L748,212" fill="none" stroke="#4a3a2e" stroke-width="1.4"/>
+  <path d="M659,212 C711,212 711,320 762,320" fill="none" stroke="#4a3a2e" stroke-width="1.4"/>
+  <path d="M911,104 C957,104 957,212 1002,212" fill="none" stroke="#4a3a2e" stroke-width="1.4"/>
+  <path d="M916,212 L1002,212" fill="none" stroke="#4a3a2e" stroke-width="1.4"/>
+  <path d="M920,320 C961,320 961,212 1002,212" fill="none" stroke="#4a3a2e" stroke-width="1.4"/>
+  <path d="M1170,212 L1241,212" fill="none" stroke="#4a3a2e" stroke-width="1.4"/>
+  <path d="M1320,243 C1320,412 346,412 346,243" fill="none" stroke="#4a3a2e" stroke-width="1.4" stroke-dasharray="5 6"/>
+  <text x="833" y="425" text-anchor="middle" font-family="'JetBrains Mono','Cascadia Mono','Menlo',monospace" font-size="11" fill="#7d6857" letter-spacing="0.6">verify · re-capture, screenshot before/after every save</text>
+
+  <!-- nodes -->
+  <g>
+    <rect x="40" y="181" width="155" height="62" rx="12" fill="#2a2018" stroke="#4a3a2e" stroke-width="1.7"/>
+    <text x="117" y="209" text-anchor="middle" font-family="'JetBrains Mono','Cascadia Mono','Menlo',monospace" font-size="15" font-weight="600" fill="#FFF3EC">linkedin-audit</text>
+    <text x="117" y="229" text-anchor="middle" font-family="'JetBrains Mono','Cascadia Mono','Menlo',monospace" font-size="11" fill="#9c8675" letter-spacing="0.4">config · role</text>
+  </g>
+  <g>
+    <rect x="267" y="181" width="158" height="62" rx="12" fill="#2a2018" stroke="#4a3a2e" stroke-width="1.7"/>
+    <rect x="267" y="181" width="158" height="62" rx="12" fill="none" stroke="#D97757" stroke-width="2.6" filter="url(#glow)" opacity="0"><animate attributeName="opacity" dur="7s" repeatCount="indefinite" keyTimes="0;0.13;0.16;0.24;0.27;1" values="0;0;0.95;0.95;0;0"/></rect>
+    <text x="346" y="209" text-anchor="middle" font-family="'JetBrains Mono','Cascadia Mono','Menlo',monospace" font-size="18" font-weight="600" fill="#FFF3EC">capture</text>
+    <text x="346" y="229" text-anchor="middle" font-family="'JetBrains Mono','Cascadia Mono','Menlo',monospace" font-size="11" fill="#9c8675" letter-spacing="0.4">Playwright · local login</text>
+  </g>
+  <g>
+    <rect x="501" y="181" width="158" height="62" rx="12" fill="#2a2018" stroke="#4a3a2e" stroke-width="1.7"/>
+    <text x="580" y="209" text-anchor="middle" font-family="'JetBrains Mono','Cascadia Mono','Menlo',monospace" font-size="18" font-weight="600" fill="#FFF3EC">extract</text>
+    <text x="580" y="229" text-anchor="middle" font-family="'JetBrains Mono','Cascadia Mono','Menlo',monospace" font-size="11" fill="#9c8675" letter-spacing="0.4">10 pages · txt + png</text>
+  </g>
+  <g>
+    <rect x="753" y="73" width="158" height="62" rx="12" fill="#2a2018" stroke="#4a3a2e" stroke-width="1.7"/>
+    <text x="832" y="101" text-anchor="middle" font-family="'JetBrains Mono','Cascadia Mono','Menlo',monospace" font-size="18" font-weight="600" fill="#FFF3EC">score</text>
+    <text x="832" y="121" text-anchor="middle" font-family="'JetBrains Mono','Cascadia Mono','Menlo',monospace" font-size="11" fill="#9c8675" letter-spacing="0.4">12-section rubric</text>
+  </g>
+  <g>
+    <rect x="748" y="181" width="168" height="62" rx="12" fill="#2a2018" stroke="#4a3a2e" stroke-width="1.7"/>
+    <text x="832" y="209" text-anchor="middle" font-family="'JetBrains Mono','Cascadia Mono','Menlo',monospace" font-size="18" font-weight="600" fill="#FFF3EC">visual checks</text>
+    <text x="832" y="229" text-anchor="middle" font-family="'JetBrains Mono','Cascadia Mono','Menlo',monospace" font-size="11" fill="#9c8675" letter-spacing="0.4">banner · photo</text>
+  </g>
+  <g>
+    <rect x="762" y="289" width="158" height="62" rx="12" fill="#2a2018" stroke="#4a3a2e" stroke-width="1.7"/>
+    <text x="841" y="317" text-anchor="middle" font-family="'JetBrains Mono','Cascadia Mono','Menlo',monospace" font-size="18" font-weight="600" fill="#FFF3EC">rewrites</text>
+    <text x="841" y="337" text-anchor="middle" font-family="'JetBrains Mono','Cascadia Mono','Menlo',monospace" font-size="11" fill="#9c8675" letter-spacing="0.4">concrete text, no fluff</text>
+  </g>
+  <g>
+    <rect x="1002" y="181" width="168" height="62" rx="12" fill="#2a2018" stroke="#4a3a2e" stroke-width="1.7"/>
+    <rect x="1002" y="181" width="168" height="62" rx="12" fill="none" stroke="#D97757" stroke-width="2.6" filter="url(#glow)" opacity="0"><animate attributeName="opacity" dur="7s" repeatCount="indefinite" keyTimes="0;0.60;0.63;0.72;0.75;1" values="0;0;0.95;0.95;0;0"/></rect>
+    <text x="1086" y="209" text-anchor="middle" font-family="'JetBrains Mono','Cascadia Mono','Menlo',monospace" font-size="18" font-weight="600" fill="#FFF3EC">REPORT.md</text>
+    <text x="1086" y="229" text-anchor="middle" font-family="'JetBrains Mono','Cascadia Mono','Menlo',monospace" font-size="11" fill="#9c8675" letter-spacing="0.4">score /120 · top 5</text>
+  </g>
+  <g>
+    <rect x="1241" y="181" width="158" height="62" rx="12" fill="#2a2018" stroke="#D97757" stroke-width="1.7"/>
+    <rect x="1241" y="181" width="158" height="62" rx="12" fill="none" stroke="#D97757" stroke-width="2.6" filter="url(#glow)" opacity="0"><animate attributeName="opacity" dur="7s" repeatCount="indefinite" keyTimes="0;0.74;0.77;0.86;0.89;1" values="0;0;0.95;0.95;0;0"/></rect>
+    <text x="1320" y="209" text-anchor="middle" font-family="'JetBrains Mono','Cascadia Mono','Menlo',monospace" font-size="18" font-weight="600" fill="#FFF3EC">apply</text>
+    <text x="1320" y="229" text-anchor="middle" font-family="'JetBrains Mono','Cascadia Mono','Menlo',monospace" font-size="11" fill="#9c8675" letter-spacing="0.4">approved edits only</text>
+  </g>
+
+  <!-- pulses: one 7s cycle through the pipeline, then the dashed verify return -->
+  <circle r="5.5" fill="#D97757" filter="url(#glow)" opacity="0">
+    <animateMotion dur="7s" repeatCount="indefinite" calcMode="linear" keyTimes="0;0.02;0.13;1" keyPoints="0;0;1;1" path="M195,212 L267,212"/>
+    <animate attributeName="opacity" dur="7s" repeatCount="indefinite" keyTimes="0;0.01;0.04;0.11;0.13;1" values="0;0;1;1;0;0"/>
+    <animate attributeName="r" values="5;6.5;5" dur="1.4s" repeatCount="indefinite"/>
+  </circle>
+  <circle r="5.5" fill="#D97757" filter="url(#glow)" opacity="0">
+    <animateMotion dur="7s" repeatCount="indefinite" calcMode="linear" keyTimes="0;0.14;0.27;1" keyPoints="0;0;1;1" path="M425,212 L501,212"/>
+    <animate attributeName="opacity" dur="7s" repeatCount="indefinite" keyTimes="0;0.13;0.16;0.25;0.27;1" values="0;0;1;1;0;0"/>
+    <animate attributeName="r" values="5;6.5;5" dur="1.4s" repeatCount="indefinite"/>
+  </circle>
+  <circle r="5.5" fill="#D97757" filter="url(#glow)" opacity="0">
+    <animateMotion dur="7s" repeatCount="indefinite" calcMode="linear" keyTimes="0;0.29;0.42;1" keyPoints="0;0;1;1" path="M659,212 C706,212 706,104 753,104"/>
+    <animate attributeName="opacity" dur="7s" repeatCount="indefinite" keyTimes="0;0.28;0.31;0.40;0.42;1" values="0;0;1;1;0;0"/>
+    <animate attributeName="r" values="5;6.5;5" dur="1.4s" repeatCount="indefinite"/>
+  </circle>
+  <circle r="5.5" fill="#D97757" filter="url(#glow)" opacity="0">
+    <animateMotion dur="7s" repeatCount="indefinite" calcMode="linear" keyTimes="0;0.29;0.42;1" keyPoints="0;0;1;1" path="M659,212 L748,212"/>
+    <animate attributeName="opacity" dur="7s" repeatCount="indefinite" keyTimes="0;0.28;0.31;0.40;0.42;1" values="0;0;1;1;0;0"/>
+    <animate attributeName="r" values="5;6.5;5" dur="1.4s" repeatCount="indefinite"/>
+  </circle>
+  <circle r="5.5" fill="#D97757" filter="url(#glow)" opacity="0">
+    <animateMotion dur="7s" repeatCount="indefinite" calcMode="linear" keyTimes="0;0.29;0.42;1" keyPoints="0;0;1;1" path="M659,212 C711,212 711,320 762,320"/>
+    <animate attributeName="opacity" dur="7s" repeatCount="indefinite" keyTimes="0;0.28;0.31;0.40;0.42;1" values="0;0;1;1;0;0"/>
+    <animate attributeName="r" values="5;6.5;5" dur="1.4s" repeatCount="indefinite"/>
+  </circle>
+  <circle r="5.5" fill="#D97757" filter="url(#glow)" opacity="0">
+    <animateMotion dur="7s" repeatCount="indefinite" calcMode="linear" keyTimes="0;0.45;0.60;1" keyPoints="0;0;1;1" path="M911,104 C957,104 957,212 1002,212"/>
+    <animate attributeName="opacity" dur="7s" repeatCount="indefinite" keyTimes="0;0.44;0.47;0.58;0.60;1" values="0;0;1;1;0;0"/>
+    <animate attributeName="r" values="5;6.5;5" dur="1.4s" repeatCount="indefinite"/>
+  </circle>
+  <circle r="5.5" fill="#D97757" filter="url(#glow)" opacity="0">
+    <animateMotion dur="7s" repeatCount="indefinite" calcMode="linear" keyTimes="0;0.45;0.60;1" keyPoints="0;0;1;1" path="M916,212 L1002,212"/>
+    <animate attributeName="opacity" dur="7s" repeatCount="indefinite" keyTimes="0;0.44;0.47;0.58;0.60;1" values="0;0;1;1;0;0"/>
+    <animate attributeName="r" values="5;6.5;5" dur="1.4s" repeatCount="indefinite"/>
+  </circle>
+  <circle r="5.5" fill="#D97757" filter="url(#glow)" opacity="0">
+    <animateMotion dur="7s" repeatCount="indefinite" calcMode="linear" keyTimes="0;0.45;0.60;1" keyPoints="0;0;1;1" path="M920,320 C961,320 961,212 1002,212"/>
+    <animate attributeName="opacity" dur="7s" repeatCount="indefinite" keyTimes="0;0.44;0.47;0.58;0.60;1" values="0;0;1;1;0;0"/>
+    <animate attributeName="r" values="5;6.5;5" dur="1.4s" repeatCount="indefinite"/>
+  </circle>
+  <circle r="5.5" fill="#D97757" filter="url(#glow)" opacity="0">
+    <animateMotion dur="7s" repeatCount="indefinite" calcMode="linear" keyTimes="0;0.62;0.74;1" keyPoints="0;0;1;1" path="M1170,212 L1241,212"/>
+    <animate attributeName="opacity" dur="7s" repeatCount="indefinite" keyTimes="0;0.61;0.64;0.72;0.74;1" values="0;0;1;1;0;0"/>
+    <animate attributeName="r" values="5;6.5;5" dur="1.4s" repeatCount="indefinite"/>
+  </circle>
+  <circle r="4.5" fill="#F5B095" filter="url(#glow)" opacity="0">
+    <animateMotion dur="7s" repeatCount="indefinite" calcMode="linear" keyTimes="0;0.78;0.97;1" keyPoints="0;0;1;1" path="M1320,243 C1320,412 346,412 346,243"/>
+    <animate attributeName="opacity" dur="7s" repeatCount="indefinite" keyTimes="0;0.77;0.80;0.95;0.97;1" values="0;0;0.85;0.85;0;0"/>
+  </circle>
+</svg>
