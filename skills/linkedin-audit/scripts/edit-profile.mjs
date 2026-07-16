@@ -617,6 +617,162 @@ async function setBanner(imagePath) {
   await page.screenshot({ path: path.join(shotsDir, 'banner-after.png') });
 }
 
+const escRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+// Row label of an association checkbox, shadow-DOM safe. label/aria resolve to the
+// SECTION header ("Experience"), not the row — climb ancestors until the first line of
+// innerText is something richer than a section name.
+const checkboxLabel = (c) =>
+  c.evaluate((el) => {
+    const sections = /^(experience|education|projects|licenses|licențe|experiență|educație|proiecte)/i;
+    let n = el;
+    for (let i = 0; i < 6 && n; i++, n = n.parentElement) {
+      const line = ((n.innerText || '').trim().split('\n')[0] || '').trim();
+      if (line && !sections.test(line)) return line;
+    }
+    return '';
+  });
+
+async function skillToTop(name) {
+  // The skills list has NO reorder control (verified July 2026: the per-skill edit form
+  // holds only association checkboxes + Delete skill + Save). Order is newest-added
+  // first, so topping a skill means delete + immediate re-add, restoring associations.
+  // NEVER run this on a skill with endorsements or a passed-assessment badge — both are
+  // lost on delete.
+  await goto('details/skills/');
+  // Per-skill edit anchors carry the skill name in aria-label in both UI languages
+  // ("Edit X skill" / "Editați competența X"). The list lazy-loads: mouse.wheel does not
+  // reach the scroll container, so scroll the last anchor into view each round instead.
+  let anchor = null;
+  for (let round = 0; round < 14 && !anchor; round++) {
+    const cand = page.locator(`a[href*="/details/skills/edit/forms/"][aria-label*="${name}"]`).first();
+    if (await cand.isVisible().catch(() => false)) { anchor = cand; break; }
+    const anchors = await page.locator('a[href*="/details/skills/edit/forms/"]').all();
+    if (anchors.length) await anchors[anchors.length - 1].scrollIntoViewIfNeeded().catch(() => {});
+    await page.waitForTimeout(1200);
+  }
+  if (!anchor) throw new Error(`No edit anchor found for skill "${name}"`);
+  await anchor.scrollIntoViewIfNeeded().catch(() => {});
+  await anchor.click();
+  await page.waitForTimeout(2500);
+  if (!(await dialog().isVisible().catch(() => false))) throw new Error('Skill edit form did not open');
+  const heading = ((await dialog().textContent()) ?? '').replace(/\s+/g, ' ');
+  if (!heading.includes(name)) throw new Error(`Opened form is not for "${name}"`);
+
+  // Harvest checked association labels before deleting.
+  const assocLabels = [];
+  for (const c of await dialog().getByRole('checkbox').all()) {
+    if (await c.isChecked().catch(() => false)) {
+      const label = ((await checkboxLabel(c)) ?? '').split('\n')[0].trim();
+      if (label) assocLabels.push(label);
+    }
+  }
+  console.log(`      harvested ${assocLabels.length} associations: ${assocLabels.join(' | ')}`);
+  await page.screenshot({ path: path.join(shotsDir, `skilltop-${name.replace(/\W+/g, '-')}-before-delete.png`) });
+
+  await dialog().locator('button, [role="button"]').filter({ hasText: /delete|șterge/i }).first().click();
+  await page.waitForTimeout(1500);
+  const confirm = dialog().locator('button, [role="button"]').filter({ hasText: /delete|șterge/i }).first();
+  if (await confirm.isVisible().catch(() => false)) await confirm.click();
+  await page.waitForTimeout(2500);
+
+  // Re-add: the add form is directly navigable.
+  await goto('skills/edit/forms/new/');
+  if (!(await dialog().isVisible().catch(() => false))) throw new Error('Add-skill form did not open');
+  const field = dialog()
+    .locator('input[type="text"], input:not([type]), input[role="combobox"], [role="combobox"]')
+    .first();
+  await field.fill(name);
+  await page.waitForTimeout(1800);
+  const exact = page
+    .locator('[role="option"]')
+    .filter({ hasText: new RegExp(`^\\s*${escRe(name)}\\s*$`) })
+    .first();
+  if (await exact.isVisible().catch(() => false)) await exact.click();
+  else {
+    const loose = page.locator(`[role="option"]:has-text("${name}")`).first();
+    if (await loose.isVisible().catch(() => false)) await loose.click();
+  }
+  await page.waitForTimeout(1500);
+
+  let restored = 0;
+  for (const label of assocLabels) {
+    const before = await checkedCount();
+    const row = dialog().getByText(new RegExp(escRe(label), 'i')).first();
+    if (!(await row.isVisible().catch(() => false))) {
+      console.warn(`      association row not found on re-add: ${label}`);
+      continue;
+    }
+    await row.click();
+    await page.waitForTimeout(600);
+    const after = await checkedCount();
+    if (after > before) restored++;
+    else if (after < before) {
+      await row.click(); // undo an accidental uncheck
+      await page.waitForTimeout(400);
+    }
+  }
+  console.log(`      restored ${restored}/${assocLabels.length} associations`);
+  await saveDialog(`skilltop-${name.replace(/\W+/g, '-')}`);
+}
+
+async function certAdd(spec) {
+  const [name, org, issueMonth, issueYear, credentialId, credentialUrl] = spec.split('|');
+  await goto('details/certifications/');
+  await page.locator('a[href*="certifications/edit/forms/new"]').first().click();
+  await page.waitForTimeout(2500);
+  if (!(await dialog().isVisible().catch(() => false))) throw new Error('Add-cert form did not open');
+  const inputs = await dialog().locator('input[type="text"]:visible, input:not([type]):visible').all();
+  await setField(inputs[0], name);
+  await setField(inputs[1], org);
+  await page.waitForTimeout(1800);
+  const orgOption = page.locator(`[role="option"]:has-text("${org}")`).first();
+  if (await orgOption.isVisible().catch(() => false)) await orgOption.click();
+  await page.waitForTimeout(800);
+  const selects = await dialog().locator('select:visible').all();
+  if (selects.length >= 2) {
+    if (issueMonth)
+      await selects[0]
+        .selectOption(String(Number(issueMonth)))
+        .catch(() => selects[0].selectOption({ index: Number(issueMonth) }));
+    if (issueYear) await selects[1].selectOption(issueYear).catch(() => {});
+  }
+  const inputsAfter = await dialog().locator('input[type="text"]:visible, input:not([type]):visible').all();
+  if (credentialId && inputsAfter.length >= 3) await setField(inputsAfter[2], credentialId);
+  if (credentialUrl && inputsAfter.length >= 4) await setField(inputsAfter[3], credentialUrl);
+  await saveDialog(`certadd-${name.replace(/\W+/g, '-')}`);
+}
+
+async function eduDelete(match) {
+  await goto('details/education/');
+  const hrefs = await collectAnchors('/details/education/edit/forms/');
+  if (hrefs.length === 0) throw new Error('No education edit anchors found');
+  for (const href of hrefs) {
+    await page.locator(`a[href="${href}"]`).first().click();
+    await page.waitForTimeout(2500);
+    if (!(await dialog().isVisible().catch(() => false))) continue;
+    // The school name lives in an input VALUE, not the dialog text.
+    const values = [((await dialog().textContent()) ?? '').replace(/\s+/g, ' ')];
+    for (const el of await dialog().locator('textarea, input, [contenteditable="true"]').all())
+      values.push(await fieldValue(el));
+    if (values.some((v) => v.includes(match))) {
+      await page.screenshot({ path: path.join(shotsDir, `edudelete-${match.replace(/\W+/g, '-')}-before.png`) });
+      await dialog().locator('button, [role="button"]').filter({ hasText: /delete|șterge/i }).first().click();
+      await page.waitForTimeout(1500);
+      const confirm = dialog().locator('button, [role="button"]').filter({ hasText: /delete|șterge/i }).first();
+      if (await confirm.isVisible().catch(() => false)) await confirm.click();
+      await page.waitForTimeout(2500);
+      if (await dialog().isVisible().catch(() => false))
+        throw new Error('Dialog still open after education delete — not confirmed');
+      await page.screenshot({ path: path.join(shotsDir, `edudelete-${match.replace(/\W+/g, '-')}-after.png`) });
+      return;
+    }
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(1000);
+  }
+  throw new Error(`No education entry matching "${match}" found among ${hrefs.length} entries`);
+}
+
 const results = [];
 for (const op of opList) {
   try {
@@ -634,6 +790,9 @@ for (const op of opList) {
     else if (op.startsWith('otw:')) await editOpenToWork(op.slice(4));
     else if (op.startsWith('featuredelete:')) await deleteFeatured(op.slice(14));
     else if (op.startsWith('certtop:')) await certToTop(op.slice(8));
+    else if (op.startsWith('skilltop:')) await skillToTop(op.slice(9));
+    else if (op.startsWith('certadd:')) await certAdd(op.slice(8));
+    else if (op.startsWith('edudelete:')) await eduDelete(op.slice(10));
     else throw new Error(`Unknown op ${op}`);
     results.push({ op, ok: true });
     console.log(`OK    ${op}`);
