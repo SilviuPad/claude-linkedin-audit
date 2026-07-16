@@ -91,7 +91,7 @@ A fresh capture confirms the edits stuck (LinkedIn sometimes no-op-saves silentl
 
 | You say | What happens |
 | --- | --- |
-| `audit my LinkedIn profile` | full capture → score → `REPORT.md` |
+| `audit my LinkedIn profile` | full capture → score → `REPORT.pdf` |
 | `just re-capture, don't re-score` | refresh the raw capture only |
 | `apply the top 3 actions` | drafts a change set for the highest-impact findings |
 | `add the missing skills and pin the right top 3` | skills add + Top-skills showcase swap |
