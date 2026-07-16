@@ -84,15 +84,20 @@ Target role: <role>
 (repeat for each section with a score below 9; sections scoring 9–10 get a single "keep as is" line)
 ```
 
-### 6. PDF export (optional)
+### 6. PDF report (the deliverable)
 
-When the user wants a shareable/printable report, render it with:
+The **PDF is what the user gets**; `REPORT.md` stays as the machine-readable source (the edit flow reads it). After writing `REPORT.md`, always render the PDF:
+
+1. **Preferred — the `report-pdf` skill** ([sergiubut/claude-report-pdf](https://github.com/sergiubut/claude-report-pdf) by Sergiu B). If it appears in the available skills, invoke it on `<audit-dir>/REPORT.md` — it produces a branded, mobile-optimized PDF (flat slide pages with clickable links).
+2. **Fallback — bundled renderer**, when report-pdf is not installed:
 
 ```bash
 node <skill-dir>/scripts/render-pdf.mjs <audit-dir>/REPORT.md
 ```
 
-Writes `REPORT.pdf` next to the markdown (A4, styled scorecard table, page numbers). Works on any markdown file, so `CHANGES.md` can be exported the same way. Offer this after writing the report; do not generate it unprompted.
+Writes `REPORT.pdf` next to the markdown (A4, styled scorecard table, page numbers; works on any markdown file, so `CHANGES.md` exports the same way).
+
+In the closing summary, give the user the **PDF path** as the report; mention `REPORT.md` only as the source it was rendered from.
 
 ## Editing the profile (apply fixes)
 
