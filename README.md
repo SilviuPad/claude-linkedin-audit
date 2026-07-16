@@ -137,7 +137,7 @@ assets/                  animated architecture diagram
 
 ## Author
 
-Built by **Silviu Pădurariu** — [isio.ro](https://isio.ro).
+Built by **Silviu Păduraru** — [isio.ro](https://isio.ro).
 
 ## License
 
