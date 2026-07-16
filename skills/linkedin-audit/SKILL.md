@@ -84,6 +84,16 @@ Target role: <role>
 (repeat for each section with a score below 9; sections scoring 9–10 get a single "keep as is" line)
 ```
 
+### 6. PDF export (optional)
+
+When the user wants a shareable/printable report, render it with:
+
+```bash
+node <skill-dir>/scripts/render-pdf.mjs <audit-dir>/REPORT.md
+```
+
+Writes `REPORT.pdf` next to the markdown (A4, styled scorecard table, page numbers). Works on any markdown file, so `CHANGES.md` can be exported the same way. Offer this after writing the report; do not generate it unprompted.
+
 ## Editing the profile (apply fixes)
 
 `scripts/edit-profile.mjs` applies changes to the live profile. **Never run it without the user approving the exact text first** — draft the change set, show it (write a CHANGES.md into the audit dir), and get explicit sign-off; this is their public professional identity. Ground every claim in the user's source material and respect any provenance rules it contains.
@@ -118,6 +128,7 @@ Hard-won DOM facts (July 2026): edit modals are shadow-DOM web components (no ar
 - `references/audit-criteria.md` — the 12-section rubric. Read it in full before scoring; do not audit from memory.
 - `scripts/capture-profile.mjs` — Playwright capture. Takes `<profileUrl> <outDir>`.
 - `scripts/edit-profile.mjs` — applies approved changes (see "Editing the profile").
+- `scripts/render-pdf.mjs` — renders `REPORT.md` (or any markdown) to PDF via headless Chrome.
 - `config.json` — saved profile URL + target role (created on first run).
 - `.browser-profile/` — persistent LinkedIn session (local only; delete it to log out).
 - `audits/` — one dated folder per run: captures + `REPORT.md`.

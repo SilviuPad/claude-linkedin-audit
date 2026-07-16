@@ -10,7 +10,7 @@ A Claude Code skill that captures your **live** LinkedIn profile with Playwright
 
 - **Capture** — visits your profile plus every detail page (experience, education, skills, certifications, projects, recommendations, featured, volunteering, activity), expands "see more", and saves extracted text, full-page screenshots, and a URL manifest.
 - **Score** — 12 sections, 0–10 each (120 total), against a rubric built on one principle: *a recruiter spends 6–10 seconds deciding whether your profile is worth more time.* Banner and photo are judged from the screenshots, not just text.
-- **Report** — `REPORT.md` with a scorecard, top-5 actions ordered by impact, and for every finding a quote of what the profile says now plus the actual rewritten replacement — never "make it more specific".
+- **Report** — `REPORT.md` with a scorecard, top-5 actions ordered by impact, and for every finding a quote of what the profile says now plus the actual rewritten replacement — never "make it more specific". Exportable to a print-quality **PDF** (`scripts/render-pdf.mjs`, rendered through the same headless Chrome the skill already uses).
 - **Apply** — 15+ Playwright edit operations: headline, About, experience descriptions, skills (add + associate with positions), Top-skills showcase swaps, projects (rewrite + add), Featured (posts, links, deletes), certification reordering, open-to-work titles, and banner upload (with a deterministic HTML→PNG banner renderer). Every op screenshots before/after and is verified by re-capture.
 
 The edit layer encodes months of hard-won LinkedIn DOM knowledge: shadow-DOM edit modals, server-side language flipping (all selectors are bilingual), lazy-loaded detail pages, silent no-op saves, and geometric button matching where aria-labels lie.
@@ -64,6 +64,14 @@ Everything lands in `audits/<date>/` inside the skill directory:
 - `screenshots/` — full-page captures of your profile and each detail page (banner and photo are scored from these).
 - `extracted/` + `manifest.json` — the raw text and URLs the scores are based on, if you want to check the receipts.
 
+Want to share the report outside your terminal? Ask for a PDF:
+
+```
+export the report as a PDF
+```
+
+`REPORT.pdf` lands next to the markdown — A4, styled scorecard, page numbers.
+
 ### 3. Apply fixes (optional, always with approval)
 
 Tell Claude which findings to act on:
@@ -96,6 +104,7 @@ A fresh capture confirms the edits stuck (LinkedIn sometimes no-op-saves silentl
 | `add the missing skills and pin the right top 3` | skills add + Top-skills showcase swap |
 | `generate and upload a new banner` | renders a 1584×396 banner deterministically, uploads it |
 | `re-run the audit and compare` | fresh audit + before/after score diff |
+| `export the report as a PDF` | renders `REPORT.md` → `REPORT.pdf` |
 
 ## Privacy & responsible use
 
@@ -115,6 +124,7 @@ skills/linkedin-audit/
     capture-profile.mjs  Playwright capture (profile + 9 detail pages)
     edit-profile.mjs     15+ edit operations with verify + screenshots
     render-banner.mjs    deterministic 1584×396 banner rendering
+    render-pdf.mjs       REPORT.md → print-quality PDF (headless Chrome)
   examples/
     changes.example.mjs  template change set for edit-profile.mjs
   config.example.json    profile URL + target role template
@@ -124,6 +134,10 @@ assets/                  animated architecture diagram
 ## Runtime artifacts (never committed)
 
 `config.json`, `.browser-profile/` (your session), `audits/` (your captures and reports), and `node_modules/` are created at runtime inside the skill directory and are gitignored.
+
+## Author
+
+Built by **Silviu Pădurariu** — [isio.ro](https://isio.ro).
 
 ## License
 
