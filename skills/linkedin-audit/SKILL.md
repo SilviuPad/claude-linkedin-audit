@@ -1,6 +1,6 @@
 ---
 name: linkedin-audit
-description: Audit a LinkedIn profile against a recruiter-focused rubric (banner, photo, headline, About, Featured, Experience, Education, Projects, Certifications, Skills, Recommendations, Activity) and produce a scored report with concrete rewrites. Captures the live profile with Playwright using a locally stored login session. Use this whenever the user mentions their LinkedIn profile, wants a LinkedIn audit or review, asks why recruiters aren't reaching out, wants help with their headline / About section / banner, or asks to improve their LinkedIn presence — even if they don't say the word "audit".
+description: Audit a LinkedIn profile against a recruiter-focused rubric (banner, photo, headline, About, Featured, Experience, Education, Projects, Certifications, Skills, Recommendations, Activity, profile mechanics) and produce a scored report with concrete rewrites. Captures the live profile with Playwright using a locally stored login session. Use this whenever the user mentions their LinkedIn profile, wants a LinkedIn audit or review, asks why recruiters aren't reaching out, wants help with their headline / About section / banner, or asks to improve their LinkedIn presence — even if they don't say the word "audit".
 ---
 
 # LinkedIn Profile Audit
@@ -16,12 +16,17 @@ Capture the user's LinkedIn profile with Playwright, score it against `reference
 Read `config.json` in this skill's directory. It looks like:
 
 ```json
-{ "profileUrl": "https://www.linkedin.com/in/example/", "targetRole": "Software Developer" }
+{
+  "profileUrl": "https://www.linkedin.com/in/example/",
+  "targetRole": "Software Developer",
+  "targetMarket": "US remote",
+  "yearsOfExperience": 8
+}
 ```
 
-- If the file is missing or a field is empty, ask the user for their profile URL and target role, then save the file so future runs don't ask again.
+- If the file is missing or `profileUrl`/`targetRole` is empty, ask the user, then save the file so future runs don't ask again. `targetMarket` and `yearsOfExperience` are optional — ask once if absent, accept "skip".
 - If the user names a different role or URL in their request, use that for this run (and ask whether to update the saved default).
-- The target role matters: headline SEO, skill ordering, and keyword checks are all judged relative to it.
+- The target role matters: headline SEO, skill ordering, and keyword checks are all judged relative to it. Target market calibrates conventions (US-remote vs. European norms differ on titles and keywords); years of experience calibrates the seniority language of rewrites.
 
 ### 2. Ensure dependencies (first run only)
 
@@ -55,7 +60,7 @@ Read `references/audit-criteria.md` — it contains the full rubric, scoring gui
 
 1. Read every captured `.txt` file and the manifest.
 2. **Look at the screenshots** — the banner and profile-photo checks (generic vs. call-to-action banner, bright/professional photo) are visual and cannot be judged from text.
-3. Score each of the 12 sections 0–10 per the rubric.
+3. Score each of the 13 sections 0–10 per the rubric.
 4. For every finding, quote what the profile currently says and write a concrete replacement — not "make it more specific" but the actual rewritten headline, bullet, or About paragraph. Ground rewrites in facts found on the profile; never invent employers, numbers, or credentials. Where a quantified bullet needs a number the profile doesn't state, put `[X]` and tell the user to fill it in.
 
 ### 5. Report
@@ -69,9 +74,9 @@ Target role: <role>
 ## Scorecard
 | # | Section | Score | Verdict |
 |---|---------|-------|---------|
-(12 rows; Verdict is one short clause, e.g. "keyword soup — trim to 4 lines")
+(13 rows; Verdict is one short clause, e.g. "keyword soup — trim to 4 lines")
 
-**Overall: <n>/120**
+**Overall: <n>/130**
 
 ## Top 5 actions
 (ordered by impact; each one sentence, imperative)
