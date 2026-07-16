@@ -138,6 +138,8 @@ Hard-won DOM facts (July 2026): edit modals are shadow-DOM web components (no ar
 - `references/audit-criteria.md` — the 12-section rubric. Read it in full before scoring; do not audit from memory.
 - `scripts/capture-profile.mjs` — Playwright capture. Takes `<profileUrl> <outDir>`.
 - `scripts/edit-profile.mjs` — applies approved changes (see "Editing the profile").
+- `scripts/company-edit.mjs` — edits a LinkedIn company page the user admins (Details + Buttons sections). The constants at the top are dummy examples — set the real admin URL, description, and website before running, and get the same explicit sign-off as for profile edits.
+- `scripts/probe.mjs` — dumps a LinkedIn page's visible text (`node probe.mjs <url>`); selector-debugging helper.
 - `scripts/render-pdf.mjs` — renders `REPORT.md` (or any markdown) to PDF via headless Chrome.
 - `config.json` — saved profile URL + target role (created on first run).
 - `.browser-profile/` — persistent LinkedIn session (local only; delete it to log out).
