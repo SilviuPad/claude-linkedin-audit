@@ -2,14 +2,14 @@
 
 Audit your LinkedIn profile the way a recruiter reads it — then fix it, from Claude Code.
 
-A Claude Code skill that captures your **live** LinkedIn profile with Playwright (using a login session that never leaves your machine), scores it against a 12-section recruiter-focused rubric, writes a prioritized report with concrete rewrites, and — after your explicit approval — applies the changes directly to your profile.
+A Claude Code skill that captures your **live** LinkedIn profile with Playwright (using a login session that never leaves your machine), scores it against a 13-section recruiter-focused rubric, writes a prioritized report with concrete rewrites, and — after your explicit approval — applies the changes directly to your profile.
 
 ![linkedin-audit architecture](assets/architecture.svg)
 
 ## What it does
 
 - **Capture** — visits your profile plus every detail page (experience, education, skills, certifications, projects, recommendations, featured, volunteering, activity), expands "see more", and saves extracted text, full-page screenshots, and a URL manifest.
-- **Score** — 12 sections, 0–10 each (120 total), against a rubric built on one principle: *a recruiter spends 6–10 seconds deciding whether your profile is worth more time.* Banner and photo are judged from the screenshots, not just text.
+- **Score** — 13 sections, 0–10 each (130 total), against a rubric built on one principle: *a recruiter spends 6–10 seconds deciding whether your profile is worth more time.* Banner and photo are judged from the screenshots, not just text.
 - **Report** — a **PDF** with a scorecard, top-5 actions ordered by impact, and for every finding a quote of what the profile says now plus the actual rewritten replacement — never "make it more specific". Rendered from `REPORT.md` (kept as the machine-readable source) via [claude-report-pdf](https://github.com/sergiubut/claude-report-pdf) by Sergiu B when installed — branded, mobile-optimized slide pages — with a bundled headless-Chrome fallback (`scripts/render-pdf.mjs`).
 - **Apply** — 15+ Playwright edit operations: headline, About, experience descriptions, skills (add + associate with positions), Top-skills showcase swaps, projects (rewrite + add), Featured (posts, links, deletes), certification reordering, open-to-work titles, and banner upload (with a deterministic HTML→PNG banner renderer). Every op screenshots before/after and is verified by re-capture.
 
@@ -60,7 +60,7 @@ Later runs skip straight to capture: no questions, no login.
 
 Everything lands in `audits/<date>/` inside the skill directory:
 
-- `REPORT.pdf` — **the report you read and share**: the scorecard (12 sections, 0–10 each), the top-5 actions ordered by impact, and for every finding a quote of the current text plus a ready-to-paste rewrite. Rendered with [claude-report-pdf](https://github.com/sergiubut/claude-report-pdf) if you have it installed (see Ecosystem), otherwise with the bundled renderer.
+- `REPORT.pdf` — **the report you read and share**: the scorecard (13 sections, 0–10 each), the top-5 actions ordered by impact, and for every finding a quote of the current text plus a ready-to-paste rewrite. Rendered with [claude-report-pdf](https://github.com/sergiubut/claude-report-pdf) if you have it installed (see Ecosystem), otherwise with the bundled renderer.
 - `REPORT.md` — the markdown source the PDF is rendered from (the edit flow reads this).
 - `screenshots/` — full-page captures of your profile and each detail page (banner and photo are scored from these).
 - `extracted/` + `manifest.json` — the raw text and URLs the scores are based on, if you want to check the receipts.
@@ -112,7 +112,7 @@ A fresh capture confirms the edits stuck (LinkedIn sometimes no-op-saves silentl
 skills/linkedin-audit/
   SKILL.md               the skill: workflow, rubric pointers, edit-op reference
   references/
-    audit-criteria.md    the full 12-section scoring rubric
+    audit-criteria.md    the full 13-section scoring rubric
   scripts/
     capture-profile.mjs  Playwright capture (profile + 9 detail pages)
     edit-profile.mjs     15+ edit operations with verify + screenshots
@@ -136,6 +136,11 @@ assets/                  animated architecture diagram
   /plugin marketplace add sergiubut/claude-report-pdf
   /plugin install report-pdf@sergiubut-claude-report-pdf
   ```
+
+## Credits
+
+- The rubric's core comes from **Danny Thompson**'s LinkedIn Learning course [LinkedIn Profiles for Technical Professionals](https://www.linkedin.com/learning/linkedin-profiles-for-technical-professionals/why-use-linkedin-to-get-you-a-job) — the 6–10-second principle and most section criteria trace back to it.
+- Several of the sharper checks (the 110-character headline cap, the 25-skill floor, the soft-skills flag, short-tenure and overlapping-date warnings, Open-to-Work mode) are adapted from **Alex Pantaleev**'s LinkedIn audit skill. Check out his work: [linkedin.com/in/alex-pantaleev](https://www.linkedin.com/in/alex-pantaleev/) · [Dev School community](https://www.skool.com/tech-interview-experts/about).
 
 ## Author
 

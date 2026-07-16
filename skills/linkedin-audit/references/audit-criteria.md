@@ -1,6 +1,6 @@
 # LinkedIn Audit Rubric
 
-Source: recruiter-focused "LINKEDIN AUDIT" course notes. Governing principle: **a recruiter spends 6–10 seconds on a profile before deciding whether to invest more**. The first line of hiring is almost always a non-technical recruiter, so every section must communicate value that a non-technical reader understands. Secondary principles that recur across sections: **don't bury the lede** (best content first, always), **quantify** (real numbers, not "several" or "20+"), and **show what you can do today**, not what you aspire to.
+Source: Danny Thompson's LinkedIn Learning course _LinkedIn Profiles for Technical Professionals_, extended with checks adapted from Alex Pantaleev's LinkedIn audit skill (see README Credits). Governing principle: **a recruiter spends 6–10 seconds on a profile before deciding whether to invest more**. The first line of hiring is almost always a non-technical recruiter, so every section must communicate value that a non-technical reader understands. Secondary principles that recur across sections: **don't bury the lede** (best content first, always), **quantify** (real numbers, not "several" or "20+"), and **show what you can do today**, not what you aspire to.
 
 Score each section 0–10. 0 = section missing or actively harmful; 5 = present but generic; 10 = fully meets the criteria below. When a section is empty on the profile, that is a finding (usually 0–2), not a skipped row.
 
