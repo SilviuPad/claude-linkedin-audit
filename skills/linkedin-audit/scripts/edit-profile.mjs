@@ -115,11 +115,20 @@ async function saveDialog(name) {
   // A lingering dialog is either a post-save "share with network" prompt (Escape closes it
   // harmlessly) or a validation error (the form with its fields is still there).
   if (await dialog().isVisible().catch(() => false)) {
-    const stillForm = await dialog()
-      .locator('textarea, [contenteditable="true"], input[type="text"]')
+    // Some saves open a follow-up dialog that CONTAINS an input (e.g. "Position saved —
+    // verify you work at X" with a work-email field). That is a success, not a stuck form.
+    const savedNote = await dialog()
+      .getByText(/saved|salvat|successful/i)
       .first()
       .isVisible()
       .catch(() => false);
+    const stillForm =
+      !savedNote &&
+      (await dialog()
+        .locator('textarea, [contenteditable="true"], input[type="text"]')
+        .first()
+        .isVisible()
+        .catch(() => false));
     if (stillForm) {
       await page.screenshot({ path: path.join(shotsDir, `${name}-validation-error.png`) });
       throw new Error('Form still open after Save — see validation-error screenshot.');
@@ -315,6 +324,162 @@ async function addProject(nameFragment) {
   await saveDialog(`projadd-${nameFragment.replace(/\W+/g, '-')}`);
 }
 
+async function expCompany(spec) {
+  // expcompany:<formMatch>@<newCompany> — relink a position's company field to a
+  // different company page. The typeahead match is REQUIRED: free text would save,
+  // but only a linked company page carries the logo on the profile.
+  const at = spec.lastIndexOf('@');
+  const formMatch = spec.slice(0, at);
+  const newCompany = spec.slice(at + 1);
+  if (!formMatch || !newCompany) throw new Error('Use expcompany:<formMatch>@<newCompany>');
+  await goto('details/experience/');
+  const hrefs = await collectAnchors('/details/experience/edit/forms/');
+  if (hrefs.length === 0) throw new Error('No experience edit anchors found');
+  for (const href of hrefs) {
+    await page.locator(`a[href="${href}"]`).first().click();
+    await page.waitForTimeout(2500);
+    if (!(await dialog().isVisible().catch(() => false))) continue;
+    // The company name lives in an input's VALUE (shadow DOM breaks ancestor matching).
+    let companyInput = null;
+    for (const el of await dialog()
+      .locator('input[type="text"]:visible, input:not([type]):visible')
+      .all()) {
+      if ((await fieldValue(el)).includes(formMatch)) {
+        companyInput = el;
+        break;
+      }
+    }
+    if (companyInput) {
+      await setField(companyInput, newCompany);
+      await page.waitForTimeout(1800);
+      const option = page.locator('[role="option"]').filter({ hasText: newCompany }).first();
+      if (!(await option.isVisible().catch(() => false)))
+        throw new Error(`No company typeahead option matching "${newCompany}"`);
+      await option.click();
+      await page.waitForTimeout(600);
+      await saveDialog(`expcompany-${newCompany.replace(/\W+/g, '-')}`);
+      return;
+    }
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(1000);
+    if (await dialog().isVisible().catch(() => false)) {
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(1000);
+    }
+  }
+  throw new Error(`No experience form field contained "${formMatch}"`);
+}
+
+async function expDate(spec) {
+  // expdate:<formMatch>@<startMonth>/<startYear> — fix a position's start date.
+  // Date selects are set with errors surfaced (a silent .catch here once left a
+  // brand-new position showing LinkedIn's stale prefill instead of the real date).
+  const at = spec.lastIndexOf('@');
+  const formMatch = spec.slice(0, at);
+  const [m, y] = spec.slice(at + 1).split('/');
+  const month = monthNum(m);
+  if (!formMatch || !month || !/^\d{4}$/.test(y ?? ''))
+    throw new Error('Use expdate:<formMatch>@<Month>/<YYYY>');
+  await goto('details/experience/');
+  const hrefs = await collectAnchors('/details/experience/edit/forms/');
+  for (const href of hrefs) {
+    await page.locator(`a[href="${href}"]`).first().click();
+    await page.waitForTimeout(2500);
+    if (!(await dialog().isVisible().catch(() => false))) continue;
+    const values = [];
+    for (const el of await dialog()
+      .locator('input[type="text"]:visible, input:not([type]):visible')
+      .all())
+      values.push(await fieldValue(el));
+    if (values.some((v) => v.includes(formMatch))) {
+      let monthSel = null;
+      let yearSel = null;
+      for (const s of await dialog().locator('select:visible').all()) {
+        if (await s.isDisabled().catch(() => false)) continue;
+        const opts = await s.evaluate((el) => Array.from(el.options).map((o) => o.text.trim()));
+        console.log(`      select: [${opts.slice(0, 3).join(', ')}…] (${opts.length} options)`);
+        if (!monthSel && opts.length === 13 && !/^\d{4}$/.test(opts[1] ?? '')) monthSel = s;
+        else if (!yearSel && /^\d{4}$/.test(opts[1] ?? '')) yearSel = s;
+      }
+      if (!monthSel || !yearSel) throw new Error('Could not identify start month/year selects');
+      await monthSel.selectOption({ index: month });
+      try {
+        await yearSel.selectOption(y);
+      } catch {
+        await yearSel.selectOption({ label: y });
+      }
+      await saveDialog(`expdate-${formMatch.replace(/\W+/g, '-')}`);
+      return;
+    }
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(1000);
+    if (await dialog().isVisible().catch(() => false)) {
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(1000);
+    }
+  }
+  throw new Error(`No experience form field contained "${formMatch}"`);
+}
+
+async function addExperience(titleFragment) {
+  // Adds a NEW position via the directly navigable edit/forms/position/new/ overlay
+  // (same pattern as projadd). Reads from changes.experienceAdds.
+  const entry = (changes.experienceAdds ?? []).find((e) => e.title.includes(titleFragment));
+  if (!entry) throw new Error(`No experienceAdds entry matching ${titleFragment}`);
+  const startMonth = monthNum(entry.startMonth);
+  await goto('edit/forms/position/new/');
+  await page.waitForTimeout(2000);
+  if (!(await dialog().isVisible().catch(() => false))) throw new Error('Add-position form did not open');
+
+  const inputs = await dialog().locator('input[type="text"]:visible, input:not([type]):visible').all();
+  if (inputs.length < 2) throw new Error(`Expected title+company inputs, found ${inputs.length}`);
+  await setField(inputs[0], entry.title);
+  await page.waitForTimeout(800);
+  await setField(inputs[1], entry.company);
+  await page.waitForTimeout(1500);
+  // Company typeahead: click an exact-ish match if one exists; free text is valid otherwise.
+  const companyOption = page.locator('[role="option"]').filter({ hasText: entry.company }).first();
+  if (await companyOption.isVisible().catch(() => false)) await companyOption.click();
+  await page.waitForTimeout(600);
+
+  // Check "I am currently working in this role" BEFORE scanning date selects, so the
+  // end-date pair disappears and the remaining month/year pair is the start date.
+  if (entry.current) {
+    const checkbox = dialog().locator('input[type="checkbox"]').first();
+    if (
+      (await checkbox.isVisible().catch(() => false)) &&
+      !(await checkbox.isChecked().catch(() => false))
+    )
+      await checkbox.click({ force: true });
+    await page.waitForTimeout(800);
+  }
+
+  // Selects are identified by their OPTION TEXTS, never by position or label (the UI
+  // language flips between account language and English per request).
+  let monthSel = null;
+  let yearSel = null;
+  for (const s of await dialog().locator('select:visible').all()) {
+    if (await s.isDisabled().catch(() => false)) continue;
+    const opts = await s.evaluate((el) => Array.from(el.options).map((o) => o.text.trim()));
+    if (opts.some((t) => /freelance|self-employed|full-time/i.test(t))) {
+      if (entry.employmentType) await s.selectOption({ label: entry.employmentType }).catch(() => {});
+    } else if (opts.some((t) => /remote|hybrid|on-site|la distanță/i.test(t))) {
+      if (entry.locationType) await s.selectOption({ label: entry.locationType }).catch(() => {});
+    } else if (!monthSel && opts.length === 13 && !/^\d{4}$/.test(opts[1] ?? '')) {
+      monthSel = s; // placeholder + 12 month names, in whatever language
+    } else if (!yearSel && opts.some((t) => /^\d{4}$/.test(t))) {
+      yearSel = s;
+    }
+  }
+  if (monthSel && startMonth) await monthSel.selectOption({ index: startMonth }).catch(() => {});
+  if (yearSel && entry.startYear) await yearSel.selectOption(String(entry.startYear)).catch(() => {});
+
+  const desc = dialog().locator('textarea:visible').first();
+  if (entry.description && (await desc.isVisible().catch(() => false)))
+    await setField(desc, entry.description);
+  await saveDialog(`expadd-${titleFragment.replace(/\W+/g, '-')}`);
+}
+
 async function openFeaturedMenu(itemRe) {
   await goto('details/featured/');
   await page
@@ -409,9 +574,21 @@ async function editOpenToWork(spec) {
   if (!(await dialog().isVisible().catch(() => false)))
     throw new Error('Job preferences form did not open');
 
+  // Chip remove controls are not always <button>s and aria-label casing varies —
+  // scan button + [role="button"] and match the label case-insensitively.
+  const chipByLabel = async (title) => {
+    for (const el of await dialog()
+      .locator('button[aria-label], [role="button"][aria-label]')
+      .all()) {
+      const label = ((await el.getAttribute('aria-label')) ?? '').toLowerCase();
+      if (label.includes(title.toLowerCase())) return el;
+    }
+    return null;
+  };
+
   for (const title of parts.remove ?? []) {
-    const btn = dialog().locator(`button[aria-label*="${title}"]`).first();
-    if (await btn.isVisible().catch(() => false)) {
+    const btn = await chipByLabel(title);
+    if (btn) {
       await btn.click();
       await page.waitForTimeout(1200);
     } else {
@@ -421,34 +598,45 @@ async function editOpenToWork(spec) {
 
   // Two form variants exist: an older one with an "Add title" button + typeahead, and a
   // newer chips form with an always-visible input that commits free text on Enter.
-  for (const title of parts.add ?? []) {
-    if (await dialog().locator(`button[aria-label*="${title}"]`).first().isVisible().catch(() => false)) {
-      console.log(`      "${title}" already present — skipping add`);
-      continue;
+  // The same chips pattern serves both Job titles and Locations (remote) — addChip
+  // handles either, differing only in the expand-button label.
+  const addChip = async (value, btnRe) => {
+    if (await chipByLabel(value)) {
+      console.log(`      "${value}" already present — skipping add`);
+      return;
     }
-    const addBtn = dialog()
-      .locator('button, [role="button"]')
-      .filter({ hasText: /add title|adăugați (un )?titlu/i })
-      .first();
+    const addBtn = dialog().locator('button, [role="button"]').filter({ hasText: btnRe }).first();
     if (await addBtn.isVisible().catch(() => false)) {
       await addBtn.click();
       await page.waitForTimeout(1500);
     }
+    // The just-expanded input is the LAST visible one (title inputs precede location ones).
     const input = dialog()
       .locator('input[type="text"]:visible, input:not([type]):visible, [role="combobox"]:visible')
-      .first();
-    await input.fill(title);
+      .last();
+    await input.fill(value);
     await page.waitForTimeout(2000);
-    const option = page.locator(`[role="option"]:has-text("${title}")`).first();
+    const option = page.locator(`[role="option"]:has-text("${value}")`).first();
     if (await option.isVisible().catch(() => false)) await option.click();
     else await input.press('Enter');
     await page.waitForTimeout(1200);
-    const chip = dialog().locator(`button[aria-label*="${title}"], [aria-label*="Remove ${title}" i]`).first();
     const committed =
-      (await chip.isVisible().catch(() => false)) ||
-      ((await dialog().textContent().catch(() => '')) ?? '').includes(title);
-    if (!committed) throw new Error(`"${title}" did not commit as a chip`);
+      (await chipByLabel(value)) !== null ||
+      ((await dialog().textContent().catch(() => '')) ?? '').includes(value);
+    if (!committed) throw new Error(`"${value}" did not commit as a chip`);
+  };
+
+  for (const title of parts.add ?? []) await addChip(title, /add title|adăugați (un )?titlu/i);
+  for (const loc of parts.removeloc ?? []) {
+    const btn = await chipByLabel(loc);
+    if (btn) {
+      await btn.click();
+      await page.waitForTimeout(1200);
+    } else {
+      console.log(`      "${loc}" not present — skipping removal`);
+    }
   }
+  for (const loc of parts.addloc ?? []) await addChip(loc, /add location|adăugați (o )?locație/i);
   await saveDialog('opentowork');
 }
 
@@ -483,10 +671,24 @@ async function deleteFeatured(match) {
     throw new Error(`Card containing "${match}" still present after delete`);
 }
 
+const MONTH_NAMES = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+function monthNum(m) {
+  // Accepts 1-12 or a month name ("Feb", "february"). The <select> needs a number;
+  // Number("Feb") is NaN, which once aborted a certtop AFTER the delete step — so
+  // callers must resolve the month BEFORE deleting anything.
+  if (!m) return null;
+  const n = Number(m);
+  if (Number.isInteger(n) && n >= 1 && n <= 12) return n;
+  const i = MONTH_NAMES.indexOf(String(m).trim().slice(0, 3).toLowerCase());
+  if (i === -1) throw new Error(`Unrecognized month "${m}" — use 1-12 or a month name like Feb`);
+  return i + 1;
+}
+
 async function certToTop(spec) {
   // LinkedIn certs display newest-ADDED first with no reorder control, so topping one
   // means delete + immediate re-add. All fields are harvested before deletion.
   const [name, org, issueMonth, issueYear, credentialId] = spec.split('|');
+  const month = monthNum(issueMonth); // throws on bad input BEFORE the delete below
   await goto('details/certifications/');
   let credentialUrl = null;
   for (const a of await page.locator(`a[aria-label*="${name}"]`).all()) {
@@ -546,7 +748,7 @@ async function certToTop(spec) {
   await page.waitForTimeout(800);
   const selects = await dialog().locator('select:visible').all();
   if (selects.length >= 2) {
-    await selects[0].selectOption(String(Number(issueMonth))).catch(() => selects[0].selectOption({ index: Number(issueMonth) }));
+    if (month) await selects[0].selectOption(String(month)).catch(() => selects[0].selectOption({ index: month }));
     await selects[1].selectOption(issueYear).catch(() => {});
   }
   const inputsAfter = await dialog().locator('input[type="text"]:visible, input:not([type]):visible').all();
@@ -718,6 +920,7 @@ async function skillToTop(name) {
 
 async function certAdd(spec) {
   const [name, org, issueMonth, issueYear, credentialId, credentialUrl] = spec.split('|');
+  const month = monthNum(issueMonth);
   await goto('details/certifications/');
   await page.locator('a[href*="certifications/edit/forms/new"]').first().click();
   await page.waitForTimeout(2500);
@@ -731,10 +934,10 @@ async function certAdd(spec) {
   await page.waitForTimeout(800);
   const selects = await dialog().locator('select:visible').all();
   if (selects.length >= 2) {
-    if (issueMonth)
+    if (month)
       await selects[0]
-        .selectOption(String(Number(issueMonth)))
-        .catch(() => selects[0].selectOption({ index: Number(issueMonth) }));
+        .selectOption(String(month))
+        .catch(() => selects[0].selectOption({ index: month }));
     if (issueYear) await selects[1].selectOption(issueYear).catch(() => {});
   }
   const inputsAfter = await dialog().locator('input[type="text"]:visible, input:not([type]):visible').all();
@@ -783,6 +986,9 @@ for (const op of opList) {
     else if (op.startsWith('skill:')) await addSkill(op.slice(6));
     else if (op.startsWith('proj:')) await editProject(op.slice(5));
     else if (op.startsWith('projadd:')) await addProject(op.slice(8));
+    else if (op.startsWith('expadd:')) await addExperience(op.slice(7));
+    else if (op.startsWith('expcompany:')) await expCompany(op.slice(11));
+    else if (op.startsWith('expdate:')) await expDate(op.slice(8));
     else if (op.startsWith('featurepost:')) await featurePost(op.slice(12));
     else if (op.startsWith('featurelink:')) await featureLink(op.slice(12));
     else if (op.startsWith('banner:')) await setBanner(op.slice(7));

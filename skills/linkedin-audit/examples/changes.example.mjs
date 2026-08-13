@@ -48,4 +48,20 @@ Multiple paragraphs are fine — this replaces the whole section.`,
       text: 'What it is, the stack, and a link.',
     },
   ],
+
+  // For the `expadd:<titleFragment>` op — add a new position. After running, ALWAYS
+  // verify: company linked to the RIGHT page (expcompany: fixes it), headline not
+  // auto-replaced (re-run headline op), start date not stale (expdate: fixes it).
+  experienceAdds: [
+    {
+      title: 'Senior Software Developer',
+      company: 'Acme',
+      employmentType: 'Freelance', // matched against the select's option labels
+      current: true,
+      startMonth: 'Jul', // 1-12 or a month name
+      startYear: 2026,
+      locationType: 'Remote',
+      description: 'What you build there, stack in context, one proof point.',
+    },
+  ],
 };
