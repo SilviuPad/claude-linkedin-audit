@@ -835,6 +835,76 @@ const checkboxLabel = (c) =>
     return '';
   });
 
+async function findSkillAnchor(name, rounds) {
+  // The skills list lazy-loads; mouse.wheel does not reach the scroll container, so
+  // scroll the last edit anchor into view each round instead.
+  for (let round = 0; round < rounds; round++) {
+    const cand = page
+      .locator(`a[href*="/details/skills/edit/forms/"][aria-label*="${name}"]`)
+      .first();
+    if (await cand.isVisible().catch(() => false)) return cand;
+    const anchors = await page.locator('a[href*="/details/skills/edit/forms/"]').all();
+    if (anchors.length)
+      await anchors[anchors.length - 1].scrollIntoViewIfNeeded().catch(() => {});
+    await page.waitForTimeout(1200);
+  }
+  return null;
+}
+
+async function skillDelete(name) {
+  // Permanently removes a skill. Endorsements and assessment badges on it are lost —
+  // intended for soft-skill cleanup, never for technical skills worth keeping.
+  await goto('details/skills/');
+  const anchor = await findSkillAnchor(name, 14);
+  if (!anchor) throw new Error(`No edit anchor found for skill "${name}"`);
+  await anchor.scrollIntoViewIfNeeded().catch(() => {});
+  await anchor.click();
+  await page.waitForTimeout(2500);
+  if (!(await dialog().isVisible().catch(() => false))) throw new Error('Skill edit form did not open');
+  const heading = ((await dialog().textContent()) ?? '').replace(/\s+/g, ' ');
+  if (!heading.includes(name)) throw new Error(`Opened form is not for "${name}"`);
+  await page.screenshot({ path: path.join(shotsDir, `skilldelete-${name.replace(/\W+/g, '-')}-before.png`) });
+  await dialog().locator('button, [role="button"]').filter({ hasText: /delete|șterge/i }).first().click();
+  await page.waitForTimeout(1500);
+  const confirm = dialog().locator('button, [role="button"]').filter({ hasText: /delete|șterge/i }).first();
+  if (await confirm.isVisible().catch(() => false)) await confirm.click();
+  await page.waitForTimeout(2500);
+  // Deletes have silently no-opped elsewhere — verify the anchor is actually gone.
+  await goto('details/skills/');
+  if (await findSkillAnchor(name, 5))
+    throw new Error(`Skill "${name}" still present after delete`);
+}
+
+async function certDelete(name) {
+  await goto('details/certifications/');
+  const hrefs = [];
+  for (const a of await page.locator('a[href*="/details/certifications/edit/forms/"]').all()) {
+    const href = await a.getAttribute('href');
+    if (href && !href.includes('/new') && !hrefs.includes(href)) hrefs.push(href);
+  }
+  for (const href of hrefs) {
+    await page.locator(`a[href="${href}"]`).first().click();
+    await page.waitForTimeout(2500);
+    if (!(await dialog().isVisible().catch(() => false))) continue;
+    // The cert name lives in the Name input's VALUE — textContent alone misses it.
+    const values = [((await dialog().textContent()) ?? '').replace(/\s+/g, ' ')];
+    for (const el of await dialog().locator('textarea, input, [contenteditable="true"]').all())
+      values.push(await fieldValue(el));
+    if (values.some((v) => v.includes(name))) {
+      await page.screenshot({ path: path.join(shotsDir, `certdelete-${name.replace(/\W+/g, '-')}-before.png`) });
+      await dialog().locator('button, [role="button"]').filter({ hasText: /delete|ștergeți/i }).first().click();
+      await page.waitForTimeout(1500);
+      const confirm = dialog().locator('button, [role="button"]').filter({ hasText: /delete|ștergeți/i }).first();
+      if (await confirm.isVisible().catch(() => false)) await confirm.click();
+      await page.waitForTimeout(2500);
+      return;
+    }
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(1000);
+  }
+  throw new Error(`Cert "${name}" not found to delete`);
+}
+
 async function skillToTop(name) {
   // The skills list has NO reorder control (verified July 2026: the per-skill edit form
   // holds only association checkboxes + Delete skill + Save). Order is newest-added
@@ -999,6 +1069,8 @@ for (const op of opList) {
     else if (op.startsWith('skilltop:')) await skillToTop(op.slice(9));
     else if (op.startsWith('certadd:')) await certAdd(op.slice(8));
     else if (op.startsWith('edudelete:')) await eduDelete(op.slice(10));
+    else if (op.startsWith('skilldelete:')) await skillDelete(op.slice(12));
+    else if (op.startsWith('certdelete:')) await certDelete(op.slice(11));
     else throw new Error(`Unknown op ${op}`);
     results.push({ op, ok: true });
     console.log(`OK    ${op}`);
